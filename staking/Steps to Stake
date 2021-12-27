@@ -1,0 +1,88 @@
+#Get the stake keys
+
+cardano-cli stake-address key-gen --verification-key-file stake.vkey \
+            --signing-key-file stake.skey
+            
+#Create Common Address
+cardano-cli address build --payment-script-file AlwaysSucceeds.plutus  --out-file Free_script.addr --$testnet
+
+#Create Stake Address
+cardano-cli address build --payment-script-file AlwaysSucceeds.plutus  --stake-verification-key-file stake.vkey --out-file pay_stake.addr --$testnet 
+
+#Generate Staking Address
+cardano-cli stake-address build --stake-verification-key-file stake.vkey --out-file stake.addr --$testnet 
+
+#Stake Staking Address
+#Create Stake Certificate
+cardano-cli stake-address registration-certificate \
+--staking-verification-key-file stake.vkey \
+--out-file stake.cert
+
+
+#1# Register Staking Certificate
+  
+cardano-cli transaction build \
+   --alonzo-era --$testnet \
+   --tx-in 695c131aab066ef63c0bddb697694fe0997e8a839a8b85384287cab9e013106a#0 \
+   --tx-in-script-file AlwaysSucceeds.plutus \
+   --tx-in-datum-value '"Genty!"' \
+   --tx-in-redeemer-value '"Genty!"' \
+   --tx-in-collateral 0f22dc3de00a5bd9a915110340bc3eab35af9f6e54992390b2923350033176f8#0 \
+   --change-address $address \
+   --witness-override 2 \
+   --protocol-params-file protocol.json \
+   --certificate-file stake.cert \
+   --out-file tx.raw
+
+
+
+    
+cardano-cli transaction sign \
+     --tx-body-file tx.raw \
+     --signing-key-file ../payment.skey \
+     --signing-key-file stake.skey \
+     --$testnet \
+     --out-file tx.signed
+
+    
+cardano-cli transaction submit \
+    --tx-file tx.signed \
+    --$testnet
+    
+
+#2# Create Delegation Certificate
+
+cardano-cli stake-address delegation-certificate \
+    --stake-verification-key-file stake.vkey \
+    --stake-pool-id f8a06bb9ed1fe4b2e3b69245bf1d9c094729e25df6a75994581cff49 \
+    --out-file deleg.cert
+    
+cardano-cli transaction build \
+   --alonzo-era --$testnet \
+   --tx-in 37e41362416a4fad3354d238c91f36e87aa468fa5c54386cc94af2b0d5d704e1#0 \
+    --tx-in-script-file AlwaysSucceeds.plutus \
+   --tx-in-datum-value '"Genty!"' \
+   --tx-in-redeemer-value '"Genty!"' \
+   --tx-in-collateral 0f22dc3de00a5bd9a915110340bc3eab35af9f6e54992390b2923350033176f8#0 \
+   --change-address $address \
+   --witness-override 2 \
+   --protocol-params-file protocol.json \
+   --certificate-file deleg.cert \
+   --out-file dl.raw
+   
+ cardano-cli transaction sign \
+     --tx-body-file dl.raw \
+     --signing-key-file ../payment.skey \
+     --signing-key-file stake.skey \
+     --$testnet \
+     --out-file dl.signed
+     
+ cardano-cli transaction submit \
+    --tx-file dl.signed \
+    --$testnet  
+
+
+
+
+
+
